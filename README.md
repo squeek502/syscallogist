@@ -11,6 +11,8 @@ An experiment in determining/cataloging the range of possible syscall behavior t
 - Run that program on many different operating systems/filesystems/etc and catalog the results in a database of some sort
 - Use the resulting database to make various inferences about the behavior of syscalls (what errors are possible and when, what the range of possible values is, etc)
 
+In theory, this information is available in the relevant documentation, but in practice, not everything is documented. This is especially true when it comes to possible errors (and particularly on Windows).
+
 This is still in the *very* early stages. It currently only tests the behavior of `NtQueryInformationFile` on Windows, and only with a subset of possible `FILE_INFORMATION_CLASS` types.
 
 Truncated example output:
