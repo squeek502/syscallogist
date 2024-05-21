@@ -221,7 +221,7 @@ fn spawnTest(
         }
     }
 
-    // Just in case there's a failure that didn't send an ErrorBundle (e.g. an error return trace)
+    // Just in case there's an error/panic
     const stderr_reader = child.stderr.?.reader();
     const stderr = try stderr_reader.readAllAlloc(allocator, 10 * 1024 * 1024);
     defer allocator.free(stderr);
