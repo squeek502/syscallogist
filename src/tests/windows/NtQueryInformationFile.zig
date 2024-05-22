@@ -1,6 +1,9 @@
 const Reporter = @import("../../reporting/Reporter.zig");
 const std = @import("std");
+const builtin = @import("builtin");
 const windows = std.os.windows;
+
+pub const enabled = builtin.os.tag == .windows;
 
 pub fn run(handle: std.fs.File.Handle, allocator: std.mem.Allocator, reporter: *Reporter) !void {
     // TODO: Stack allocate if this is small enough for that

@@ -3,7 +3,7 @@ const builtin = @import("builtin");
 const native_endian = builtin.cpu.arch.endian();
 const Reporter = @import("reporting/Reporter.zig");
 const Collector = @import("reporting/Collector.zig");
-const NtQueryInformationFile = @import("tests/windows/NtQueryInformationFile.zig");
+const tests = @import("tests.zig");
 const fsinfo = @import("fsinfo.zig");
 
 pub fn main() !void {
@@ -41,10 +41,6 @@ pub fn main() !void {
         _ = test_split.first();
         const test_name = test_split.rest();
 
-        if (!std.mem.eql(u8, test_name, "NtQueryInformationFile")) {
-            return error.UnknownTest;
-        }
-
         if (args.len < 3 or !std.mem.startsWith(u8, args[3], "--test-handle=")) {
             return error.MalformedArguments;
         }
@@ -67,7 +63,16 @@ pub fn main() !void {
             else => false,
         };
         const handle = if (use_stdin) std.io.getStdIn().handle else self_exe.handle;
-        try NtQueryInformationFile.run(handle, allocator, &reporter);
+
+        run_test: {
+            inline for (enabled_test_names) |enabled_test_name| {
+                if (std.mem.eql(u8, test_name, enabled_test_name)) {
+                    try @field(tests, enabled_test_name).run(handle, allocator, &reporter);
+                    break :run_test;
+                }
+            }
+            return error.UnknownTest;
+        }
 
         try reporter.end();
     } else {
@@ -83,19 +88,37 @@ pub fn main() !void {
         try argv.append(self_exe_path);
         try argv.append("--child");
 
-        for (std.enums.values(TestHandle)) |test_handle| {
-            argv.shrinkRetainingCapacity(2);
+        for (enabled_test_names) |enabled_test_name| {
+            for (std.enums.values(TestHandle)) |test_handle| {
+                argv.shrinkRetainingCapacity(2);
 
-            try argv.append("--test=NtQueryInformationFile");
+                var test_name_buf: [64]u8 = undefined;
+                const test_name_arg = try std.fmt.bufPrint(&test_name_buf, "--test={s}", .{enabled_test_name});
+                try argv.append(test_name_arg);
 
-            var test_handle_buf: [64]u8 = undefined;
-            const test_handle_arg = try std.fmt.bufPrint(&test_handle_buf, "--test-handle={s}", .{@tagName(test_handle)});
-            try argv.append(test_handle_arg);
+                var test_handle_buf: [64]u8 = undefined;
+                const test_handle_arg = try std.fmt.bufPrint(&test_handle_buf, "--test-handle={s}", .{@tagName(test_handle)});
+                try argv.append(test_handle_arg);
 
-            try spawnTest(allocator, argv.items, test_handle);
+                try spawnTest(allocator, argv.items, test_handle);
+            }
         }
     }
 }
+
+const enabled_test_names = enabled_tests: {
+    const decls = @typeInfo(tests).Struct.decls;
+    var enabled_tests: [decls.len][:0]const u8 = undefined;
+    var enabled_count: usize = 0;
+    for (decls) |decl| {
+        if (@typeInfo(@field(tests, decl.name)) != .Struct) continue;
+        if (!@field(tests, decl.name).enabled) continue;
+        enabled_tests[enabled_count] = decl.name;
+        enabled_count += 1;
+    }
+    const final_enabled_tests = enabled_tests[0..enabled_count].*;
+    break :enabled_tests final_enabled_tests;
+};
 
 const TestHandle = enum {
     stdin_nul,
