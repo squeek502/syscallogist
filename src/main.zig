@@ -188,7 +188,24 @@ fn spawnTest(
                 const as_status: std.os.windows.NTSTATUS = @enumFromInt(as_int);
 
                 std.io.getStdErr().writer().writeByteNTimes(' ', indent * spaces) catch {};
-                std.debug.print("NTSTATUS: {s}\n", .{@tagName(as_status)});
+                std.debug.print("-> NTSTATUS: {s}\n", .{@tagName(as_status)});
+
+                try collector.discardBytes(data_header.len);
+            },
+            .errno => {
+                const data_header = collector.dataHeader() catch |err| switch (err) {
+                    error.EndOfStream => break :poll,
+                    else => |e| return e,
+                };
+                const data_bytes = collector.peekBytes(data_header.len) catch |err| switch (err) {
+                    error.EndOfStream => break :poll,
+                    else => |e| return e,
+                };
+                const as_int = std.mem.readVarInt(@typeInfo(std.posix.E).Enum.tag_type, data_bytes, native_endian);
+                const as_status: std.posix.E = @enumFromInt(as_int);
+
+                std.io.getStdErr().writer().writeByteNTimes(' ', indent * spaces) catch {};
+                std.debug.print("-> errno: {s}\n", .{@tagName(as_status)});
 
                 try collector.discardBytes(data_header.len);
             },

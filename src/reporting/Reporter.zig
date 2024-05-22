@@ -23,6 +23,13 @@ pub fn ntStatus(self: *Reporter, status: std.os.windows.NTSTATUS) !void {
     try self.data(.uint, std.mem.asBytes(&status_int));
 }
 
+pub fn errno(self: *Reporter, err: std.posix.E) !void {
+    const header = structs.Header{ .tag = .errno };
+    try self.raw(std.mem.asBytes(&header));
+    const err_int = @intFromEnum(err);
+    try self.data(.uint, std.mem.asBytes(&err_int));
+}
+
 pub fn wstr(self: *Reporter, name: []const u8, val: []const u16) !void {
     const header = structs.Header{ .tag = .field };
     try self.raw(std.mem.asBytes(&header));

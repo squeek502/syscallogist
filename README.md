@@ -13,9 +13,9 @@ An experiment in determining/cataloging the range of possible syscall behavior t
 
 In theory, this information is available in the relevant documentation, but in practice, not everything is documented. This is especially true when it comes to possible errors (and particularly on Windows).
 
-This is still in the *very* early stages. It currently only tests the behavior of `NtQueryInformationFile` on Windows, and only with a subset of possible `FILE_INFORMATION_CLASS` types.
+This is still in the *very* early stages. It currently only tests the behavior of `NtQueryInformationFile` on Windows (and only with a subset of possible `FILE_INFORMATION_CLASS` types), and `fstat` on Linux.
 
-Truncated example output:
+Truncated example output when run on Windows:
 
 ```
 NtQueryInformationFile: stdin_nul
@@ -70,7 +70,7 @@ NtQueryInformationFile: self_exe
 
 ## Compiling & Usage
 
-Last tested with Zig `0.13.0-dev.231+28476a5ee`. Only compiles/runs on Windows currently.
+Last tested with Zig `0.13.0-dev.231+28476a5ee`. Only compiles/runs on Windows and Linux currently.
 
 ```
 zig build

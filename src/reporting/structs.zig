@@ -7,6 +7,8 @@ pub const Tag = enum(u32) {
     field,
     /// int data
     ntstatus,
+    /// int data
+    errno,
 };
 
 pub const Header = extern struct {
